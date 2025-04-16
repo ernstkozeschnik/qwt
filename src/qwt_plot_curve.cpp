@@ -597,8 +597,8 @@ void QwtPlotCurve::drawSticks( QPainter* painter,
     double y0 = yMap.transform( m_data->baseline );
     if ( doAlign )
     {
-        x0 = qRound( x0 );
-        y0 = qRound( y0 );
+        if ( qIsFinite(x0) ) x0 = qRound( x0 );
+        if ( qIsFinite(y0) ) y0 = qRound( y0 );
     }
 
     const Qt::Orientation o = orientation();
@@ -612,8 +612,8 @@ void QwtPlotCurve::drawSticks( QPainter* painter,
         double yi = yMap.transform( sample.y() );
         if ( doAlign )
         {
-            xi = qRound( xi );
-            yi = qRound( yi );
+            if ( qIsFinite(xi) ) xi = qRound( xi );
+            if ( qIsFinite(yi) ) yi = qRound( yi );
         }
 
         if ( o == Qt::Horizontal )
@@ -697,8 +697,8 @@ void QwtPlotCurve::drawDots( QPainter* painter,
 
             if ( doAlign )
             {
-                xi = qRound( xi );
-                yi = qRound( yi );
+                if ( qIsFinite(xi) ) xi = qRound( xi );
+                if ( qIsFinite(yi) ) yi = qRound( yi );
             }
 
             QwtPainter::drawPoint( painter, QPointF( xi, yi ) );
@@ -761,8 +761,8 @@ void QwtPlotCurve::drawSteps( QPainter* painter,
         double yi = yMap.transform( sample.y() );
         if ( doAlign )
         {
-            xi = qRound( xi );
-            yi = qRound( yi );
+            if ( qIsFinite(xi) ) xi = qRound( xi );
+            if ( qIsFinite(yi) ) yi = qRound( yi );
         }
 
         if ( ip > 0 )
@@ -944,7 +944,7 @@ void QwtPlotCurve::closePolyline( QPainter* painter,
 
         double refY = yMap.transform( baseline );
         if ( doAlign )
-            refY = qRound( refY );
+            if ( qIsFinite(refY) ) refY = qRound( refY );
 
         polygon += QPointF( polygon.last().x(), refY );
         polygon += QPointF( polygon.first().x(), refY );
@@ -956,7 +956,7 @@ void QwtPlotCurve::closePolyline( QPainter* painter,
 
         double refX = xMap.transform( baseline );
         if ( doAlign )
-            refX = qRound( refX );
+            if ( qIsFinite(refX) ) refX = qRound( refX );
 
         polygon += QPointF( refX, polygon.last().y() );
         polygon += QPointF( refX, polygon.first().y() );
