@@ -15,6 +15,22 @@
 
 #include <limits>
 
+#if QT_VERSION >= 0x060500
+
+#include <qtimezone.h>
+
+// Qt 6.9 deprecates the Qt::TimeSpec variants of QDateTime. Like those,
+// OffsetFromUTC without an offset means UTC and TimeZone means local time.
+static inline QTimeZone qwtTimeZone( Qt::TimeSpec spec )
+{
+    if ( spec == Qt::UTC || spec == Qt::OffsetFromUTC )
+        return QTimeZone( QTimeZone::UTC );
+
+    return QTimeZone( QTimeZone::LocalTime );
+}
+
+#endif
+
 #if QT_VERSION >= 0x050000
 
 typedef qint64 QwtJulianDay;
@@ -132,7 +148,13 @@ static inline void qwtFloorTime(
     const Qt::TimeSpec timeSpec = dt.timeSpec();
 
     if ( timeSpec == Qt::LocalTime )
+    {
+#if QT_VERSION >= 0x060500
+        dt = dt.toTimeZone( QTimeZone( QTimeZone::UTC ) );
+#else
         dt = dt.toTimeSpec( Qt::UTC );
+#endif
+    }
 
     const QTime t = dt.time();
     switch( intervalType )
@@ -157,7 +179,13 @@ static inline void qwtFloorTime(
     }
 
     if ( timeSpec == Qt::LocalTime )
+    {
+#if QT_VERSION >= 0x060500
+        dt = dt.toTimeZone( QTimeZone( QTimeZone::LocalTime ) );
+#else
         dt = dt.toTimeSpec( Qt::LocalTime );
+#endif
+    }
 }
 
 static inline QDateTime qwtToTimeSpec(
@@ -175,11 +203,19 @@ static inline QDateTime qwtToTimeSpec(
         // for those dates
 
         QDateTime dt2 = dt;
+#if QT_VERSION >= 0x060500
+        dt2.setTimeZone( qwtTimeZone( spec ) );
+#else
         dt2.setTimeSpec( spec );
+#endif
         return dt2;
     }
 
+#if QT_VERSION >= 0x060500
+    return dt.toTimeZone( qwtTimeZone( spec ) );
+#else
     return dt.toTimeSpec( spec );
+#endif
 }
 
 #if 0
@@ -277,7 +313,11 @@ QDateTime QwtDate::toDateTime( double value, Qt::TimeSpec timeSpec )
 
     static const QTime timeNull( 0, 0, 0, 0 );
 
+#if QT_VERSION >= 0x060500
+    QDateTime dt( d, timeNull.addMSecs( msecs ), QTimeZone( QTimeZone::UTC ) );
+#else
     QDateTime dt( d, timeNull.addMSecs( msecs ), Qt::UTC );
+#endif
 
     if ( timeSpec == Qt::LocalTime )
         dt = qwtToTimeSpec( dt, timeSpec );
@@ -653,7 +693,12 @@ int QwtDate::utcOffset( const QDateTime& dateTime )
         }
         default:
         {
+#if QT_VERSION >= 0x060500
+            const QDateTime dt1( dateTime.date(), dateTime.time(),
+                QTimeZone( QTimeZone::UTC ) );
+#else
             const QDateTime dt1( dateTime.date(), dateTime.time(), Qt::UTC );
+#endif
             seconds = dateTime.secsTo( dt1 );
         }
     }

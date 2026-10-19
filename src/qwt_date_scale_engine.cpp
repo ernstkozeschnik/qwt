@@ -15,6 +15,22 @@
 
 #include <limits>
 
+#if QT_VERSION >= 0x060500
+
+#include <qtimezone.h>
+
+// Qt 6.9 deprecates the Qt::TimeSpec variants of QDateTime. Like those,
+// OffsetFromUTC without an offset means UTC and TimeZone means local time.
+static inline QTimeZone qwtTimeZone( Qt::TimeSpec spec )
+{
+    if ( spec == Qt::UTC || spec == Qt::OffsetFromUTC )
+        return QTimeZone( QTimeZone::UTC );
+
+    return QTimeZone( QTimeZone::LocalTime );
+}
+
+#endif
+
 static inline double qwtMsecsForType( int type )
 {
     static const double msecs[] =
@@ -1115,7 +1131,9 @@ QDateTime QwtDateScaleEngine::alignDate(
 
     if ( dateTime.timeSpec() == Qt::OffsetFromUTC )
     {
-#if QT_VERSION >= 0x050200
+#if QT_VERSION >= 0x060500
+        dt.setTimeZone( QTimeZone( QTimeZone::UTC ) );
+#elif QT_VERSION >= 0x050200
         dt.setOffsetFromUtc( 0 );
 #else
         dt.setUtcOffset( 0 );
@@ -1277,7 +1295,9 @@ QDateTime QwtDateScaleEngine::alignDate(
 
     if ( dateTime.timeSpec() == Qt::OffsetFromUTC )
     {
-#if QT_VERSION >= 0x050200
+#if QT_VERSION >= 0x060500
+        dt.setTimeZone( QTimeZone::fromSecondsAheadOfUtc( dateTime.offsetFromUtc() ) );
+#elif QT_VERSION >= 0x050200
         dt.setOffsetFromUtc( dateTime.offsetFromUtc() );
 #else
         dt.setUtcOffset( dateTime.utcOffset() );
@@ -1303,13 +1323,19 @@ QDateTime QwtDateScaleEngine::toDateTime( double value ) const
         const QDate date = ( value <= 0.0 )
             ? QwtDate::minDate() : QwtDate::maxDate();
 
+#if QT_VERSION >= 0x060500
+        dt = QDateTime( date, QTime( 0, 0 ), qwtTimeZone( m_data->timeSpec ) );
+#else
         dt = QDateTime( date, QTime( 0, 0 ), m_data->timeSpec );
+#endif
     }
 
     if ( m_data->timeSpec == Qt::OffsetFromUTC )
     {
         dt = dt.addSecs( m_data->utcOffset );
-#if QT_VERSION >= 0x050200
+#if QT_VERSION >= 0x060500
+        dt.setTimeZone( QTimeZone::fromSecondsAheadOfUtc( m_data->utcOffset ) );
+#elif QT_VERSION >= 0x050200
         dt.setOffsetFromUtc( m_data->utcOffset );
 #else
         dt.setUtcOffset( m_data->utcOffset );

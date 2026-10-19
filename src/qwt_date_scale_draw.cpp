@@ -10,6 +10,10 @@
 #include "qwt_date_scale_draw.h"
 #include "qwt_text.h"
 
+#if QT_VERSION >= 0x060500
+#include <qtimezone.h>
+#endif
+
 class QwtDateScaleDraw::PrivateData
 {
   public:
@@ -272,7 +276,9 @@ QDateTime QwtDateScaleDraw::toDateTime( double value ) const
     if ( m_data->timeSpec == Qt::OffsetFromUTC )
     {
         dt = dt.addSecs( m_data->utcOffset );
-#if QT_VERSION >= 0x050200
+#if QT_VERSION >= 0x060500
+        dt.setTimeZone( QTimeZone::fromSecondsAheadOfUtc( m_data->utcOffset ) );
+#elif QT_VERSION >= 0x050200
         dt.setOffsetFromUtc( m_data->utcOffset );
 #else
         dt.setUtcOffset( m_data->utcOffset );
