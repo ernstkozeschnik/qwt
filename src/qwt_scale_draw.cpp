@@ -653,6 +653,14 @@ void QwtScaleDraw::drawTick( QPainter* painter, double value, double len ) const
 
     const double tval = scaleMap().transform( value );
 
+    // A tick that does not map to a finite position cannot be drawn: qRound() of a
+    // non-finite value is undefined and the integer garbage it yields reaches the
+    // rasterizer as a coordinate. It happens when the ticks and the scale map do not
+    // belong together - linear ticks on a logarithmic map, for instance, where
+    // transform() takes the logarithm of zero or of a negative tick.
+    if ( !qIsFinite( tval ) )
+        return;
+
     if ( QwtPainter::roundingAlignment( painter ) )
         QwtScaleRendererInt::drawTick( painter, this, tval, len );
     else
@@ -770,6 +778,11 @@ void QwtScaleDraw::drawLabel( QPainter* painter, double value ) const
         return;
 
     QPointF pos = labelPosition( value );
+
+    // see drawTick(): a non-finite position would go into the painter's world
+    // transformation and from there into everything drawn afterwards
+    if ( !qIsFinite( pos.x() ) || !qIsFinite( pos.y() ) )
+        return;
 
     QSizeF labelSize = lbl.textSize( painter->font() );
 

@@ -179,6 +179,18 @@ void QwtPlot::setAxisScaleEngine( QwtAxisId axisId, QwtScaleEngine* scaleEngine 
 
         d.isValid = false;
 
+        // THE TICKS STILL BELONG TO THE OLD ENGINE. The widget has the new
+        // transformation from the line above, while its scale division is the one the
+        // old engine calculated, and until the next updateAxes() it paints the one
+        // through the other: linear ticks on a logarithmic map, where the tick at zero
+        // transforms to infinity and is drawn at a position that is no position. A
+        // repaint can happen before updateAxes() is reached, so divide the interval
+        // again right here.
+        d.scaleDiv = scaleEngine->divideScale( d.minValue, d.maxValue,
+            d.maxMajor, d.maxMinor, d.stepSize );
+        d.isValid = true;
+        d.scaleWidget->setScaleDiv( d.scaleDiv );
+
         autoRefresh();
     }
 }

@@ -338,6 +338,12 @@ void QwtPlotGrid::drawLines( QPainter* painter, const QRectF& canvasRect,
     for ( int i = 0; i < values.count(); i++ )
     {
         double value = scaleMap.transform( values[i] );
+
+        // a tick that does not map to a finite position has no grid line either,
+        // and qRound() of a non-finite value is undefined
+        if ( !qIsFinite( value ) )
+            continue;
+
         if ( doAlign )
             value = qRound( value );
 

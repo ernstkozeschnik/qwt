@@ -541,6 +541,15 @@ void QwtPainter::drawSimpleRichText( QPainter* painter, const QRectF& rect,
 void QwtPainter::drawLine( QPainter* painter,
     const QPointF& p1, const QPointF& p2 )
 {
+    // LAST LINE OF DEFENCE. A non-finite coordinate crashes the raster engine on
+    // Windows and is drawn somewhere arbitrary elsewhere, so no line is better than a
+    // broken one. The callers should not produce one; this keeps a slip harmless.
+    if ( !qIsFinite( p1.x() ) || !qIsFinite( p1.y() )
+        || !qIsFinite( p2.x() ) || !qIsFinite( p2.y() ) )
+    {
+        return;
+    }
+
     QRectF clipRect;
     const bool deviceClipping = qwtIsClippingNeeded( painter, clipRect );
 
